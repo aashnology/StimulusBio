@@ -1,5 +1,11 @@
 import pandas as pd
 
+from stimulusbio.validation import validate_dataset
+from stimulusbio.validation.design import (
+    validate_batch_confounding,
+    validate_group_balance,
+    validate_groups,
+)
 from stimulusbio.validation.expression import (
     validate_expression_matrix,
     validate_metadata,
@@ -180,9 +186,9 @@ def test_empty_experimental_group_is_detected():
         }
     )
 
-    conditions = metadata["condition"].unique()
+    issues = validate_groups(metadata)
 
-    assert "stimulus" not in conditions
+    assert "Experimental design contains fewer than two conditions." in issues
 
 
 def test_insufficient_biological_replicates_are_detected():
@@ -193,9 +199,10 @@ def test_insufficient_biological_replicates_are_detected():
         }
     )
 
-    group_sizes = metadata.groupby("condition").size()
+    issues = validate_groups(metadata, min_replicates=2)
 
-    assert group_sizes["stimulus"] < 2
+    assert any("stimulus" in issue for issue in issues)
+    assert any("biological replicates" in issue for issue in issues)
 
 
 def test_severe_group_imbalance_is_detected():
@@ -206,9 +213,9 @@ def test_severe_group_imbalance_is_detected():
         }
     )
 
-    group_sizes = metadata.groupby("condition").size()
+    issues = validate_group_balance(metadata)
 
-    assert group_sizes["control"] / group_sizes["stimulus"] >= 5
+    assert any("Severe group imbalance" in issue for issue in issues)
 
 
 def test_condition_batch_confounding_is_detected():
@@ -220,6 +227,90 @@ def test_condition_batch_confounding_is_detected():
         }
     )
 
-    contingency = pd.crosstab(metadata["condition"], metadata["batch"])
+    issues = validate_batch_confounding(metadata)
 
-    assert (contingency > 0).sum(axis=0).eq(1).all()
+    assert any("confounded" in issue for issue in issues)
+
+
+# -------------------------
+# Unified dataset validation
+# -------------------------
+
+def test_validate_dataset_passes_valid_dataset():
+    expression = pd.DataFrame(
+        {
+            "sample_1": [10, 20, 30],
+            "sample_2": [11, 21, 31],
+            "sample_3": [12, 22, 32],
+            "sample_4": [13, 23, 33],
+        },
+        index=["gene_1", "gene_2", "gene_3"],
+    )
+
+    metadata = pd.DataFrame(
+        {
+            "sample_id": [
+                "sample_1",
+                "sample_2",
+                "sample_3",
+                "sample_4",
+            ],
+            "condition": [
+                "control",
+                "control",
+                "stimulus",
+                "stimulus",
+            ],
+        }
+    )
+
+    result = validate_dataset(expression, metadata)
+
+    assert result["status"] == "PASS"
+    assert result["errors"] == []
+
+
+def test_validate_dataset_fails_invalid_expression_data():
+    expression = pd.DataFrame(
+        {
+            "sample_1": [10, None],
+            "sample_2": [11, 21],
+        },
+        index=["gene_1", "gene_2"],
+    )
+
+    metadata = pd.DataFrame(
+        {
+            "sample_id": ["sample_1", "sample_2"],
+            "condition": ["control", "stimulus"],
+        }
+    )
+
+    result = validate_dataset(expression, metadata)
+
+    assert result["status"] == "FAIL"
+    assert "Expression matrix contains missing values." in result["errors"]
+
+
+def test_validate_dataset_reports_design_warnings():
+    expression = pd.DataFrame(
+        {
+            "sample_1": [10],
+            "sample_2": [20],
+            "sample_3": [30],
+        },
+        index=["gene_1"],
+    )
+
+    metadata = pd.DataFrame(
+        {
+            "sample_id": ["sample_1", "sample_2", "sample_3"],
+            "condition": ["control", "control", "stimulus"],
+        }
+    )
+
+    result = validate_dataset(expression, metadata)
+
+    assert result["status"] == "PASS"
+    assert result["errors"] == []
+    assert len(result["warnings"]) > 0
