@@ -1,146 +1,167 @@
-\# StimulusBio (WIP)
+# StimulusBio (WIP)
 
+### An Open-Source Computational Framework for Analysing Cellular Responses to External Stimuli
 
+StimulusBio is an open-source framework for building **reproducible, validated, and interpretable computational workflows** for studying cellular responses to controlled external stimuli.
 
-\*\*An Open-Source Computational Framework for Analysing Cellular Responses to External Stimuli\*\*
+The initial implementation focuses on **bulk transcriptomic data from stimulus-response experiments**.
 
+> **External stimulus → Cellular response → Molecular measurements → Computational analysis → Biological interpretation**
 
+## Why StimulusBio?
 
-StimulusBio is an open-source computational framework for analysing how biological systems respond to controlled external stimuli.
+Biological data analysis can produce misleading results when problems in the underlying data or experimental design go undetected.
 
+StimulusBio therefore follows a **validation-first** approach, with emphasis on:
 
+* Experimental-design awareness
+* Data integrity and sample alignment
+* Reproducibility
+* Appropriate statistical methodology
+* Effect sizes and uncertainty
+* Transparent provenance
+* Conservative biological interpretation
 
-The initial version focuses on bulk transcriptomic data and reproducible statistical workflows.
+The framework is designed to **fail loudly rather than silently produce questionable analyses**.
 
+## Current Status
 
+**Early development — V0.1**
 
-\## Core Concept
+The current implementation provides a validation layer for expression data and experimental metadata.
 
+### Implemented
 
+* Expression-matrix structural validation
+* Duplicate feature detection
+* Duplicate sample detection
+* Missing-value detection
+* Non-numeric value detection
+* Metadata schema validation
+* Duplicate metadata sample detection
+* Missing condition-label detection
+* Expression/metadata sample-alignment checks
+* Automated tests for validation behaviour
 
-External stimulus  
+**Current test status: 15 tests passing**
 
-→ Cellular response  
-
-→ Molecular measurements  
-
-→ Computational analysis  
-
-→ Biological interpretation
-
-
-
-\## V0.1 Scope
-
-
-
-The initial framework aims to provide:
-
-
-
-\- Expression-data ingestion and validation
-
-\- Experimental metadata validation
-
-\- Quality-control checks
-
-\- Exploratory analysis
-
-\- Differential-expression analysis
-
-\- Gene-set and pathway enrichment
-
-\- Reproducible visualisations
-
-\- Machine-readable results
-
-\- Analysis configuration and provenance
-
-
-
-\## Scientific Principles
-
-
-
-StimulusBio prioritises:
-
-
-
-1\. Reproducibility over convenience
-
-2\. Validation before analysis
-
-3\. Effect sizes and uncertainty alongside statistical significance
-
-4\. Transparent methodological assumptions
-
-5\. Reproducible provenance
-
-6\. Appropriate interpretation of negative or inconclusive results
-
-7\. Avoidance of unsupported causal claims
-
-
-
-\## Project Status
-
-
-
-StimulusBio is currently in early development.
-
-
-
-The first milestone is a reproducible end-to-end analysis of a public stimulus-response transcriptomic dataset.
-
-
-
-\## Repository Structure
-
-
+### Planned V0.1 Workflow
 
 ```text
+Data ingestion
+      ↓
+Validation
+      ↓
+Preprocessing
+      ↓
+Quality control
+      ↓
+Exploratory analysis
+      ↓
+Differential expression
+      ↓
+Pathway / gene-set analysis
+      ↓
+Visualisation
+      ↓
+Reproducible reporting
+```
 
-src/stimulusbio/
+## Input
 
-├── io/
+The initial framework is designed for datasets containing:
 
-├── validation/
+**Expression matrix**
 
-├── preprocessing/
+* Stable feature/gene identifiers
+* Sample identifiers
+* Numeric expression measurements
 
-├── statistics/
+**Experimental metadata**
 
-├── visualization/
+* `sample_id`
+* `condition`
 
-└── reporting/
+Additional metadata such as `batch`, `cell_type`, `timepoint`, and `treatment` can be supported where available.
 
+## Scientific Principles
 
+1. **Validate before analysing**
+2. **Reproducibility over convenience**
+3. **Effect sizes and uncertainty alongside significance**
+4. **Experimental design matters**
+5. **No unsupported causal claims**
+6. **Negative or inconclusive results are valid**
+7. **Analysis provenance should be traceable**
 
-tests/
+## Case Study
 
-notebooks/
+StimulusBio is a **framework, not a single dataset analysis**.
 
-examples/
+A public stimulus-response transcriptomic dataset will be used as an initial case study to demonstrate the framework end-to-end, including:
 
-data/
+* Dataset provenance
+* Experimental design
+* Validation
+* Quality control
+* Statistical analysis
+* Biological interpretation
+* Limitations
+* Reproducibility
 
-docs/
+## Repository Structure
 
+```text
+StimulusBio/
+├── src/stimulusbio/
+│   ├── io/
+│   ├── validation/
+│   ├── preprocessing/
+│   ├── statistics/
+│   ├── visualization/
+│   └── reporting/
+├── tests/
+├── notebooks/
+├── examples/
+├── data/
+├── docs/
+│   ├── methodology/
+│   └── research/
+├── README.md
+├── CONTRIBUTING.md
+├── LICENSE
+├── pyproject.toml
+└── .gitignore
+```
 
-\##Future Extensions
+## Development Philosophy
 
-Potential future extensions include:
+StimulusBio is being developed incrementally.
 
-Additional omics modalities
-Time-series stimulus-response analysis
-Single-cell data
-Predictive modelling
-Cross-dataset comparison
-Automated research reporting
+Each component should have a clear purpose, defined inputs and outputs, automated tests, documented assumptions, and scientific justification.
 
-These extensions will be considered only after the core framework is scientifically and technically validated.
+Infrastructure will be added **when required by the research workflow**, rather than built speculatively.
 
-\##License
+## Future Directions
+
+Potential extensions include:
+
+* Time-series stimulus-response analysis
+* Additional omics modalities
+* Single-cell transcriptomics
+* Cross-dataset comparison
+* Predictive modelling
+* Response classification
+* Automated analytical reporting
+
+These will be considered after the core workflow is established and validated.
+
+## Contributing
+
+Contributions, scientific feedback, methodological discussion, and reproducibility improvements are welcome.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contribution guidelines.
+
+## License
 
 MIT License.
-
