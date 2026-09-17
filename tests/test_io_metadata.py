@@ -236,13 +236,15 @@ def test_metadata_loader_preserves_row_order_and_values(tmp_path: Path):
         "batch_1",
     ]
 
+def test_directory_path_raises_value_error(tmp_path: Path):
+    directory = tmp_path / "metadata_directory"
+    directory.mkdir()
+
+    with pytest.raises(ValueError, match="path is not a file"):
+        load_metadata(directory)
 
 def test_metadata_loader_reports_missing_file_consistently(tmp_path: Path):
     file_path = tmp_path / "missing.csv"
 
-    with pytest.raises(
-        FileNotFoundError,
-        match="Metadata file not found",
-    ):
+    with pytest.raises(FileNotFoundError, match="Metadata file not found"):
         load_metadata(file_path)
-
