@@ -171,3 +171,10 @@ def test_expression_loader_reports_missing_file_consistently(
     ):
         load_expression_matrix(file_path)
 
+def test_directory_path_raises_value_error(tmp_path: Path):
+    directory = tmp_path / "expression_directory"
+    directory.mkdir()
+
+    with pytest.raises(ValueError, match="path is not a file"):
+        load_expression_matrix(directory)
+
