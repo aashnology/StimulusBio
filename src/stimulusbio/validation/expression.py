@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-
-REQUIRED_METADATA_COLUMNS = {"sample_id", "condition"}
+from stimulusbio.io.metadata import REQUIRED_METADATA_COLUMNS
 
 
 def validate_expression_matrix(expression: pd.DataFrame) -> list[str]:
@@ -44,13 +43,11 @@ def validate_metadata(metadata: pd.DataFrame) -> list[str]:
             f"Metadata is missing required columns: {sorted(missing_columns)}."
         )
 
-    if "sample_id" in metadata.columns:
-        if metadata["sample_id"].duplicated().any():
-            issues.append("Metadata contains duplicate sample IDs.")
+    if "sample_id" in metadata.columns and metadata["sample_id"].duplicated().any():
+        issues.append("Metadata contains duplicate sample IDs.")
 
-    if "condition" in metadata.columns:
-        if metadata["condition"].isna().any():
-            issues.append("Metadata contains missing condition labels.")
+    if "condition" in metadata.columns and metadata["condition"].isna().any():
+        issues.append("Metadata contains missing condition labels.")
 
     return issues
 

@@ -12,7 +12,6 @@ from stimulusbio.validation.expression import (
     validate_sample_alignment,
 )
 
-
 # -------------------------
 # Expression matrix tests
 # -------------------------
@@ -133,6 +132,14 @@ def test_missing_condition_labels_are_detected():
     assert "Metadata contains missing condition labels." in issues
 
 
+def test_empty_metadata_table_is_detected():
+    metadata = pd.DataFrame()
+
+    issues = validate_metadata(metadata)
+
+    assert issues == ["Metadata table is empty."]
+
+
 # -------------------------
 # Sample alignment tests
 # -------------------------
@@ -218,6 +225,86 @@ def test_severe_group_imbalance_is_detected():
     assert any("Severe group imbalance" in issue for issue in issues)
 
 
+def test_validate_groups_requires_condition_column():
+    metadata = pd.DataFrame({"sample_id": ["sample_1", "sample_2"]})
+
+    issues = validate_groups(metadata)
+
+    assert "Cannot validate groups: 'condition' is missing." in issues
+
+
+def test_validate_groups_detects_no_conditions_defined():
+    metadata = pd.DataFrame(
+        {
+            "sample_id": ["sample_1", "sample_2"],
+            "condition": [None, None],
+        }
+    )
+
+    issues = validate_groups(metadata)
+
+    assert "No experimental conditions are defined." in issues
+
+
+def test_validate_groups_ignores_unused_categorical_categories():
+    # Only 'control' actually occurs; 'stimulus' is a category label with
+    # zero samples (e.g. a pandas Categorical column with an unused
+    # category). It must not be treated as a real experimental group.
+    metadata = pd.DataFrame(
+        {
+            "sample_id": ["sample_1", "sample_2", "sample_3"],
+            "condition": pd.Categorical(
+                ["control", "control", "control"],
+                categories=["control", "stimulus"],
+            ),
+        }
+    )
+
+    issues = validate_groups(metadata)
+
+    assert "Experimental design contains fewer than two conditions." in issues
+    assert not any("0 sample(s)" in issue for issue in issues)
+
+
+def test_validate_group_balance_requires_condition_column():
+    metadata = pd.DataFrame({"sample_id": ["sample_1", "sample_2"]})
+
+    issues = validate_group_balance(metadata)
+
+    assert "Cannot validate group balance: 'condition' is missing." in issues
+
+
+def test_validate_group_balance_skips_single_condition():
+    metadata = pd.DataFrame(
+        {
+            "sample_id": ["sample_1", "sample_2"],
+            "condition": ["control", "control"],
+        }
+    )
+
+    assert validate_group_balance(metadata) == []
+
+
+def test_validate_group_balance_detects_imbalance_despite_unused_category():
+    # A real, severe 10:1 imbalance must still be detected even when the
+    # 'condition' column also carries an unused categorical category
+    # (which would otherwise make the smallest group look like size 0
+    # and short-circuit the whole check).
+    metadata = pd.DataFrame(
+        {
+            "sample_id": [f"sample_{i}" for i in range(11)],
+            "condition": pd.Categorical(
+                ["control"] * 10 + ["stimulus"],
+                categories=["control", "stimulus", "unused_label"],
+            ),
+        }
+    )
+
+    issues = validate_group_balance(metadata)
+
+    assert any("Severe group imbalance" in issue for issue in issues)
+
+
 def test_condition_batch_confounding_is_detected():
     metadata = pd.DataFrame(
         {
@@ -230,6 +317,20 @@ def test_condition_batch_confounding_is_detected():
     issues = validate_batch_confounding(metadata)
 
     assert any("confounded" in issue for issue in issues)
+
+
+def test_batch_confounding_skipped_when_no_complete_rows():
+    # 'condition' and 'batch' columns exist, but no row has both values
+    # present, so there's nothing to cross-tabulate.
+    metadata = pd.DataFrame(
+        {
+            "sample_id": ["s1", "s2"],
+            "condition": ["control", None],
+            "batch": [None, "batch_1"],
+        }
+    )
+
+    assert validate_batch_confounding(metadata) == []
 
 
 # -------------------------

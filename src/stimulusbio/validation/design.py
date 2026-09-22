@@ -22,6 +22,12 @@ def validate_groups(
 
     group_sizes = conditions.value_counts()
 
+    # Categorical columns can carry unused categories with a count of 0;
+    # those aren't real experimental groups and must not be treated as one
+    # (they would otherwise mask a true "fewer than two conditions" issue
+    # and produce a spurious "0 sample(s)" warning).
+    group_sizes = group_sizes[group_sizes > 0]
+
     if len(group_sizes) < 2:
         issues.append("Experimental design contains fewer than two conditions.")
 
@@ -48,14 +54,16 @@ def validate_group_balance(
 
     group_sizes = metadata["condition"].dropna().value_counts()
 
+    # Exclude unused categorical categories (count 0): they aren't real
+    # groups, and leaving them in would otherwise mask genuine imbalance
+    # between the groups that do have samples.
+    group_sizes = group_sizes[group_sizes > 0]
+
     if len(group_sizes) < 2:
         return issues
 
     largest_group = group_sizes.max()
     smallest_group = group_sizes.min()
-
-    if smallest_group == 0:
-        return issues
 
     ratio = largest_group / smallest_group
 

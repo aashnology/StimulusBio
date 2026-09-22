@@ -11,11 +11,11 @@ from .expression import (
 )
 
 __all__ = [
-    "validate_dataset",
     "validate_batch_confounding",
+    "validate_dataset",
+    "validate_expression_matrix",
     "validate_group_balance",
     "validate_groups",
-    "validate_expression_matrix",
     "validate_metadata",
     "validate_sample_alignment",
 ]

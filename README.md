@@ -43,7 +43,7 @@ The current implementation provides a validation layer for expression data and e
 * Expression/metadata sample-alignment checks
 * Automated tests for validation behaviour
 
-**Current test status: 58 tests passing, 4 skipped (pending Steps 4/6/7/9/10)**
+**Current test status: 66 tests passing, 4 skipped (pending Steps 4/6/7/9/10)**
 
 ### Planned V0.1 Workflow
 
