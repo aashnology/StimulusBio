@@ -41,9 +41,12 @@ The current implementation provides a validation layer for expression data and e
 * Duplicate metadata sample detection
 * Missing condition-label detection
 * Expression/metadata sample-alignment checks
-* Automated tests for validation behaviour
+* Feature-level filtering by explicit mean-expression threshold
+* Expression normalization (CPM, log2, per-feature z-score)
+* Per-sample QC diagnostics (library size, missingness, zero-count)
+* Automated tests for validation and preprocessing behaviour
 
-**Current test status: 66 tests passing, 4 skipped (pending Steps 4/6/7/9/10)**
+**Current test status: 89 tests passing, 3 skipped (pending Steps 6/7/9/10)**
 
 ### Planned V0.1 Workflow
 
