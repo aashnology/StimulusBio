@@ -178,3 +178,13 @@ def test_directory_path_raises_value_error(tmp_path: Path):
     with pytest.raises(ValueError, match="path is not a file"):
         load_expression_matrix(directory)
 
+
+def test_empty_file_is_rejected(tmp_path: Path):
+    file_path = tmp_path / "expression.csv"
+    file_path.write_text("")
+
+    with pytest.raises(
+        ValueError,
+        match="Unable to parse expression matrix",
+    ):
+        load_expression_matrix(file_path)

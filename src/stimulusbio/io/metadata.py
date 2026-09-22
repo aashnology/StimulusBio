@@ -4,11 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-
-SUPPORTED_FORMATS = {
-    ".csv": ",",
-    ".tsv": "\t",
-}
+from ._shared import load_delimited_file
 
 REQUIRED_METADATA_COLUMNS = {"sample_id", "condition"}
 
@@ -19,34 +15,7 @@ def load_metadata(path: str | Path) -> pd.DataFrame:
     The metadata is loaded without biological transformations.
     The sample_id column remains a regular DataFrame column.
     """
-    path = Path(path)
-
-    if not path.exists():
-        raise FileNotFoundError(f"Metadata file not found: {path}")
-
-    if not path.is_file():
-        raise ValueError(f"Metadata path is not a file: {path}")
-
-    suffix = path.suffix.lower()
-
-    if suffix not in SUPPORTED_FORMATS:
-        supported = ", ".join(SUPPORTED_FORMATS)
-        raise ValueError(
-            f"Unsupported metadata format: '{suffix}'. "
-            f"Supported formats are: {supported}."
-        )
-
-    delimiter = SUPPORTED_FORMATS[suffix]
-
-    try:
-        metadata = pd.read_csv(
-            path,
-            sep=delimiter,
-        )
-    except (pd.errors.EmptyDataError, pd.errors.ParserError) as exc:
-        raise ValueError(
-            f"Unable to parse metadata: {path}"
-        ) from exc
+    metadata = load_delimited_file(path, label="Metadata")
 
     missing_columns = REQUIRED_METADATA_COLUMNS - set(metadata.columns)
 
