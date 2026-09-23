@@ -29,6 +29,12 @@ dev = [
     "pytest-cov>=5.0",
     "ruff>=0.6"
 ]
+# Differential expression (statistics/differential.py) wraps PyDESeq2 -
+# see that module's docstring for the resolved design decision. Kept
+# as an optional extra so validation/QC-only installs stay lightweight.
+stats = [
+    "pydeseq2>=0.4"
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

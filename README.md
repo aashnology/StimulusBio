@@ -47,7 +47,7 @@ The current implementation provides a validation layer for expression data and e
 * Exploratory PCA (principal-component scores per sample, explained variance)
 * Automated tests for validation, preprocessing, and exploratory-analysis behaviour
 
-**Current test status: 105 tests passing, 3 skipped (pending Steps 7/9/10)**
+**Current test status: 107 tests passing, 3 skipped (pending Steps 7/9/10)**
 
 ### Planned V0.1 Workflow
 

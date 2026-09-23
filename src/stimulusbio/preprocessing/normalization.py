@@ -9,15 +9,18 @@ Every transformation applied here must be:
 - reversible in documentation, even if not in code
 
 Scope note: this module implements general-purpose, method-agnostic
-transforms only (CPM scaling, log2 transform, per-feature z-score).
-It deliberately does NOT implement differential-expression-specific
-normalization (e.g. DESeq2 median-of-ratios or edgeR TMM size
-factors) — that choice is downstream of the open decision in
-statistics/differential.py (wrap an established DE method vs.
-reimplement), which has not yet been resolved. Once that decision is
-made, it may add a normalization method here or require
-statistics/differential.py to compute its own size factors upstream
-of this module. Do not resolve that silently.
+transforms only (CPM scaling, log2 transform, per-feature z-score),
+intended for exploratory analysis, QC, and visualization.
+
+RESOLVED (see statistics/differential.py): differential expression
+wraps PyDESeq2, which computes its own DESeq2 median-of-ratios size
+factors internally from raw counts. Consequently, none of the
+transforms in this module (cpm, log2, zscore) are valid inputs to
+statistics.differential.compare_conditions — feeding it
+already-normalized values would double-normalize and invalidate the
+result. compare_conditions takes raw (un-normalized, non-negative
+integer) counts directly; this module's outputs are for
+exploratory/QC/visualization use only.
 """
 
 from __future__ import annotations
