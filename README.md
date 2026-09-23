@@ -45,9 +45,12 @@ The current implementation provides a validation layer for expression data and e
 * Expression normalization (CPM, log2, per-feature z-score)
 * Per-sample QC diagnostics (library size, missingness, zero-count)
 * Exploratory PCA (principal-component scores per sample, explained variance)
-* Automated tests for validation, preprocessing, and exploratory-analysis behaviour
+* PCA scatter-plot visualization, colored by condition (pure Figure in/out, no global state)
+* Report assembly (pure combination of results + provenance, no computation)
+* Environment/provenance capture (Python + package versions)
+* Automated tests for validation, preprocessing, exploratory-analysis, visualization, and reporting behaviour
 
-**Current test status: 107 tests passing, 3 skipped (pending Steps 7/9/10)**
+**Current test status: 126 tests passing, 1 skipped (pending Step 7 — differential expression, deliberately deferred to its own implementation session)**
 
 ### Planned V0.1 Workflow
 

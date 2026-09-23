@@ -257,9 +257,11 @@ def test_pca_n_components_can_equal_max_supported():
 
 @pytest.mark.skip(
     reason=(
-        "Step 7 blocked on an open design decision (project doc, section "
-        "28): rpy2-wrapped DESeq2/edgeR vs. a from-scratch implementation. "
-        "Needs its own dedicated chat."
+        "Step 7's method decision is RESOLVED (project doc, section 28): "
+        "compare_conditions will wrap PyDESeq2, per the module docstring. "
+        "The wrapping implementation itself (DeseqDataSet/DeseqStats "
+        "construction, design/contrast options, apeGLM shrinkage) is "
+        "deliberately deferred to its own dedicated implementation chat."
     )
 )
 def test_compare_conditions_placeholder():
