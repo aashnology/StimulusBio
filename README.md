@@ -44,9 +44,10 @@ The current implementation provides a validation layer for expression data and e
 * Feature-level filtering by explicit mean-expression threshold
 * Expression normalization (CPM, log2, per-feature z-score)
 * Per-sample QC diagnostics (library size, missingness, zero-count)
-* Automated tests for validation and preprocessing behaviour
+* Exploratory PCA (principal-component scores per sample, explained variance)
+* Automated tests for validation, preprocessing, and exploratory-analysis behaviour
 
-**Current test status: 89 tests passing, 3 skipped (pending Steps 6/7/9/10)**
+**Current test status: 105 tests passing, 3 skipped (pending Steps 7/9/10)**
 
 ### Planned V0.1 Workflow
 
