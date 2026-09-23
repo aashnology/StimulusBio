@@ -28,7 +28,7 @@ The framework is designed to **fail loudly rather than silently produce question
 
 **Early development — V0.1**
 
-The current implementation provides a validation layer for expression data and experimental metadata.
+The current implementation covers the full planned V0.1 workflow end to end: ingestion, validation, preprocessing, QC, exploratory analysis, differential expression, visualization, and reporting.
 
 ### Implemented
 
@@ -46,11 +46,12 @@ The current implementation provides a validation layer for expression data and e
 * Per-sample QC diagnostics (library size, missingness, zero-count)
 * Exploratory PCA (principal-component scores per sample, explained variance)
 * PCA scatter-plot visualization, colored by condition (pure Figure in/out, no global state)
+* Differential expression between two conditions, wrapping PyDESeq2 — effect size (log2 fold change), uncertainty (standard error), and Benjamini-Hochberg FDR-adjusted significance (optional `stats` extra)
 * Report assembly (pure combination of results + provenance, no computation)
 * Environment/provenance capture (Python + package versions)
-* Automated tests for validation, preprocessing, exploratory-analysis, visualization, and reporting behaviour
+* Automated tests for every implemented layer
 
-**Current test status: 126 tests passing, 1 skipped (pending Step 7 — differential expression, deliberately deferred to its own implementation session)**
+**Current test status: 142 tests passing, 0 skipped**
 
 ### Planned V0.1 Workflow
 

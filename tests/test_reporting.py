@@ -4,7 +4,6 @@ import pytest
 
 from stimulusbio.reporting import build_report, capture_environment
 
-
 # -------------------------
 # build_report
 # -------------------------

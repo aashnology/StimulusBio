@@ -1,12 +1,7 @@
 """Tests for the statistics module.
 
-exploratory.compute_pca (Step 6) is implemented and tested below.
-
-differential.compare_conditions (Step 7) is still a stub. It is
-deliberately unresolved pending an open decision (project doc, section
-28): whether it wraps an established DE method (e.g. rpy2 ->
-DESeq2/edgeR) or reimplements DE statistics from scratch. That needs
-its own dedicated chat — see differential.py's module docstring.
+exploratory.compute_pca (Step 6) and differential.compare_conditions
+(Step 7) are both implemented and tested below.
 """
 
 import numpy as np
@@ -252,31 +247,197 @@ def test_pca_n_components_can_equal_max_supported():
 
 
 # -------------------------
-# differential.compare_conditions: intentionally still a stub
+# differential.compare_conditions
 # -------------------------
 
-@pytest.mark.skip(
-    reason=(
-        "Step 7's method decision is RESOLVED (project doc, section 28): "
-        "compare_conditions will wrap PyDESeq2, per the module docstring. "
-        "The wrapping implementation itself (DeseqDataSet/DeseqStats "
-        "construction, design/contrast options, apeGLM shrinkage) is "
-        "deliberately deferred to its own dedicated implementation chat."
-    )
+pytest.importorskip(
+    "pydeseq2",
+    reason="pydeseq2 (the 'stats' extra) is not installed in this environment.",
 )
-def test_compare_conditions_placeholder():
-    pass
 
 
-def test_compare_conditions_is_still_unimplemented():
-    """Guard test: fails loudly once someone implements this, as a nudge
-    to also un-skip/replace the placeholder above and update docs."""
-    expression = pd.DataFrame(
-        {"sample_1": [1.0], "sample_2": [2.0]}, index=["gene_1"]
+def _synthetic_counts(
+    n_genes=150,
+    n_per_condition=5,
+    seed=0,
+    up_gene="gene_0",
+    up_amount=400,
+):
+    rng = np.random.default_rng(seed)
+    samples = [f"sample_{i}" for i in range(2 * n_per_condition)]
+    condition = ["control"] * n_per_condition + ["stimulus"] * n_per_condition
+
+    counts = pd.DataFrame(
+        rng.poisson(lam=60, size=(n_genes, len(samples))),
+        index=[f"gene_{i}" for i in range(n_genes)],
+        columns=samples,
     )
-    metadata = pd.DataFrame(
-        {"sample_id": ["sample_1", "sample_2"], "condition": ["control", "stimulus"]}
+
+    if up_gene is not None:
+        stimulus_samples = [s for s, c in zip(samples, condition) if c == "stimulus"]
+        counts.loc[up_gene, stimulus_samples] += up_amount
+
+    metadata = pd.DataFrame({"sample_id": samples, "condition": condition})
+
+    return counts, metadata
+
+
+def test_compare_conditions_returns_expected_columns_and_index():
+    counts, metadata = _synthetic_counts()
+
+    result = compare_conditions(counts, metadata, "stimulus", "control")
+
+    assert list(result.columns) == [
+        "base_mean",
+        "log2_fold_change",
+        "lfc_se",
+        "p_value",
+        "p_value_adj",
+    ]
+    assert list(result.index) == list(counts.index)
+
+
+def test_compare_conditions_direction_matches_condition_a_vs_condition_b():
+    counts, metadata = _synthetic_counts(up_gene="gene_0", up_amount=400)
+
+    result = compare_conditions(counts, metadata, "stimulus", "control")
+
+    assert result.loc["gene_0", "log2_fold_change"] > 2.0
+    assert result.loc["gene_0", "p_value_adj"] < 0.01
+
+
+def test_compare_conditions_direction_reverses_with_swapped_arguments():
+    counts, metadata = _synthetic_counts(up_gene="gene_0", up_amount=400)
+
+    forward = compare_conditions(counts, metadata, "stimulus", "control")
+    reversed_ = compare_conditions(counts, metadata, "control", "stimulus")
+
+    assert forward.loc["gene_0", "log2_fold_change"] == pytest.approx(
+        -reversed_.loc["gene_0", "log2_fold_change"], rel=1e-6
     )
 
-    with pytest.raises(NotImplementedError):
-        compare_conditions(expression, metadata, "control", "stimulus")
+
+def test_compare_conditions_reports_uncertainty_alongside_effect_size():
+    counts, metadata = _synthetic_counts()
+
+    result = compare_conditions(counts, metadata, "stimulus", "control")
+
+    assert (result["lfc_se"].dropna() > 0).all()
+
+
+def test_compare_conditions_applies_fdr_correction():
+    counts, metadata = _synthetic_counts()
+
+    result = compare_conditions(counts, metadata, "stimulus", "control")
+
+    tested = result.dropna(subset=["p_value", "p_value_adj"])
+    assert (tested["p_value_adj"] >= tested["p_value"]).all()
+
+
+def test_compare_conditions_gives_nan_for_independent_filtering():
+    counts, metadata = _synthetic_counts()
+    counts.iloc[-1] = 0
+
+    result = compare_conditions(counts, metadata, "stimulus", "control")
+
+    assert pd.isna(result.iloc[-1]["p_value"])
+    assert pd.isna(result.iloc[-1]["p_value_adj"])
+
+
+def test_compare_conditions_does_not_mutate_inputs():
+    counts, metadata = _synthetic_counts()
+    original_counts = counts.copy(deep=True)
+    original_metadata = metadata.copy(deep=True)
+
+    compare_conditions(counts, metadata, "stimulus", "control")
+
+    pd.testing.assert_frame_equal(counts, original_counts)
+    pd.testing.assert_frame_equal(metadata, original_metadata)
+
+
+def test_compare_conditions_rejects_empty_expression():
+    counts, metadata = _synthetic_counts()
+
+    with pytest.raises(ValueError, match="empty"):
+        compare_conditions(counts.iloc[0:0], metadata, "stimulus", "control")
+
+
+def test_compare_conditions_rejects_equal_conditions():
+    counts, metadata = _synthetic_counts()
+
+    with pytest.raises(ValueError, match="must differ"):
+        compare_conditions(counts, metadata, "stimulus", "stimulus")
+
+
+def test_compare_conditions_rejects_unknown_condition():
+    counts, metadata = _synthetic_counts()
+
+    with pytest.raises(ValueError, match="not found"):
+        compare_conditions(counts, metadata, "nonexistent", "control")
+
+
+def test_compare_conditions_rejects_sample_mismatch():
+    counts, metadata = _synthetic_counts()
+    mismatched_metadata = metadata.iloc[:-1]
+
+    with pytest.raises(ValueError, match="do not match"):
+        compare_conditions(counts, mismatched_metadata, "stimulus", "control")
+
+
+def test_compare_conditions_rejects_missing_values():
+    counts, metadata = _synthetic_counts()
+    counts.iloc[0, 0] = np.nan
+
+    with pytest.raises(ValueError, match="missing values"):
+        compare_conditions(counts, metadata, "stimulus", "control")
+
+
+def test_compare_conditions_rejects_negative_values():
+    counts, metadata = _synthetic_counts()
+    counts.iloc[0, 0] = -1
+
+    with pytest.raises(ValueError, match="negative"):
+        compare_conditions(counts, metadata, "stimulus", "control")
+
+
+def test_compare_conditions_rejects_non_whole_number_values():
+    counts, metadata = _synthetic_counts()
+    counts = counts.astype(float)
+    counts.iloc[0, 0] = 1.5
+
+    with pytest.raises(ValueError, match="non-whole-number"):
+        compare_conditions(counts, metadata, "stimulus", "control")
+
+
+def test_compare_conditions_rejects_insufficient_replicates():
+    counts, metadata = _synthetic_counts(n_per_condition=1)
+
+    with pytest.raises(ValueError, match="at least 2"):
+        compare_conditions(counts, metadata, "stimulus", "control")
+
+
+def test_compare_conditions_requires_metadata_columns():
+    counts, metadata = _synthetic_counts()
+    metadata = metadata.drop(columns=["condition"])
+
+    with pytest.raises(ValueError, match="sample_id.*condition"):
+        compare_conditions(counts, metadata, "stimulus", "control")
+
+
+def test_compare_conditions_gives_actionable_error_without_pydeseq2(monkeypatch):
+    """Simulates the optional 'stats' extra being absent."""
+    import builtins
+
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name.startswith("pydeseq2"):
+            raise ImportError("simulated missing dependency")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    counts, metadata = _synthetic_counts()
+
+    with pytest.raises(ImportError, match="stats"):
+        compare_conditions(counts, metadata, "stimulus", "control")

@@ -1,12 +1,12 @@
+from .differential import compare_conditions
 from .exploratory import compute_pca
 
-# NOTE: differential.compare_conditions is deliberately NOT exported here.
-# It is still a stub (raises NotImplementedError) pending the open decision
-# documented in differential.py's module docstring (project doc, section 28):
-# whether it wraps an established DE method (e.g. rpy2 -> DESeq2/edgeR) or
-# reimplements DE statistics from scratch. That decision needs its own
-# dedicated chat and is not resolved here.
+# NOTE: importing compare_conditions here does NOT require pydeseq2 to be
+# installed — the pydeseq2 import itself is deferred to inside the function
+# body (see differential.py's module docstring), so validation/QC-only
+# installs without the 'stats' extra can still import this package.
 
 __all__ = [
+    "compare_conditions",
     "compute_pca",
 ]
